@@ -29,7 +29,7 @@ class Project(models.Model):
         return self.name
 
 class Transaction(models.Model):
-    
+
     TRANSACTION_TYPES = [
         ('income', 'Ingreso'),
         ('expense', 'Gasto'),
