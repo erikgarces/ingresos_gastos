@@ -1,3 +1,4 @@
+from os import name
 from rest_framework import viewsets, filters # , status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -30,7 +31,7 @@ class CategoryViewSet(BaseUserViewSet):
     ordering_fields = ['name', 'created_at']
     ordering = ['name']
 
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=['get'], url_name='category-transaction')
     def transactions(self, request, pk=None):
         """Obtener todas las transacciones de una categoría"""
         category = self.get_object()
@@ -41,7 +42,7 @@ class CategoryViewSet(BaseUserViewSet):
         serializer = TransactionSerializer(transactions, many=True)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=['get'], url_name='category-summary')
     def summary(self, request, pk=None):
         """Resumen de transacciones por categoría"""
         category = self.get_object()
@@ -99,18 +100,18 @@ class ProjectViewSet(BaseUserViewSet):
             user=request.user
         )
         
-        total_income = transactions.filter(type='income').aggregate(
+        total_income = transactions.filter(type_transaction='income').aggregate(
             total=Sum('amount')
         )['total'] or 0
         
-        total_expense = transactions.filter(type='expense').aggregate(
+        total_expense = transactions.filter(type_transaction='expense').aggregate(
             total=Sum('amount')
         )['total'] or 0
         
         # Resumen por categoría dentro del proyecto
-        category_summary = transactions.values('category__name').annotate(
+        category_summary = transactions.values('category__name', 'type_transaction').annotate(
             total=Sum('amount'),
-            count=Count('id')
+            count=Count('id'),
         ).order_by('category__name')
         
         return Response({
@@ -139,7 +140,7 @@ class TransactionViewSet(BaseUserViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['type', 'category', 'project', 'date']
+    filterset_fields = ['type_transaction', 'category', 'project', 'date']
     search_fields = ['description']
     ordering_fields = ['date', 'amount', 'created_at']
     ordering = ['-date', '-created_at']
@@ -215,7 +216,7 @@ class TransactionViewSet(BaseUserViewSet):
         
         # Resumen por proyecto
         project_summary = queryset.filter(project__isnull=False).values(
-            'project__name', 'type'
+            'project__name', 'type_transaction'
         ).annotate(
             total=Sum('amount'),
             count=Count('id')
@@ -284,7 +285,7 @@ class TransactionViewSet(BaseUserViewSet):
         for transaction in queryset:
             export_data.append({
                 'id': transaction.id,
-                'type': transaction.type,
+                'type_transaction': transaction.type_transaction,
                 'amount': float(transaction.amount),
                 'description': transaction.description,
                 'date': transaction.date.strftime('%Y-%m-%d'),

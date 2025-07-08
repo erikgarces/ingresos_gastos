@@ -49,4 +49,4 @@ class Transaction(models.Model):
         ordering = ['-date', '-created_at']
     
     def __str__(self):
-        return f"{self.get_type_display()} - {self.amount} - {self.description[:50]}"
+        return f"{self.get_type_transaction_display()} - {self.amount} - {self.description[:50]}"

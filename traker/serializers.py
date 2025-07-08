@@ -34,7 +34,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = [
-            'id', 'type', 'amount', 'description', 'date', 
+            'id', 'type_transaction', 'amount', 'description', 'date', 
             'category', 'category_name', 'project', 'project_name',
             'created_at', 'updated_at'
         ]
